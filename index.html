@@ -376,6 +376,41 @@
             color: #666;
         }
 
+        /* Speed Controls */
+        .speed-controls {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            gap: 0.5rem;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 0.5rem;
+            border-radius: 12px;
+            border: 1px solid var(--glass-border);
+            z-index: 20;
+        }
+
+        .speed-btn {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .speed-btn:hover, .speed-btn.active {
+            background: var(--accent-color);
+            color: black;
+            border-color: var(--accent-color);
+        }
+
     </style>
 </head>
 <body>
@@ -388,6 +423,12 @@
     <div class="container">
         <!-- The Solar System Visualization -->
         <div class="orrery-container" id="orrery">
+            <div class="speed-controls">
+                <button class="speed-btn" onclick="togglePause()" title="Pause/Play" id="btn-pause">⏸</button>
+                <button class="speed-btn active" onclick="setSpeed(1, this)" title="1x Speed">1x</button>
+                <button class="speed-btn" onclick="setSpeed(4, this)" title="4x Speed">4x</button>
+                <button class="speed-btn" onclick="setSpeed(10, this)" title="10x Speed">10x</button>
+            </div>
             <div class="sun" onclick="selectPlanet('sun')"></div>
             <!-- Planets will be injected here by JS -->
         </div>
@@ -670,6 +711,39 @@
         }
 
         // Interaction Logic
+        let currentSpeed = 1;
+        let isPaused = false;
+
+        function setSpeed(speed, btnElement) {
+            currentSpeed = speed;
+            
+            // Update UI
+            document.querySelectorAll('.speed-btn').forEach(b => {
+                if(b.id !== 'btn-pause') b.classList.remove('active');
+            });
+            if(btnElement) btnElement.classList.add('active');
+
+            // Apply to all tracks (planets and moons)
+            const tracks = document.querySelectorAll('.orbit-track, .moon-track');
+            tracks.forEach(track => {
+                // Use Web Animations API to update playback rate smoothly if available
+                track.getAnimations().forEach(anim => {
+                    anim.playbackRate = currentSpeed;
+                });
+            });
+        }
+
+        function togglePause() {
+            isPaused = !isPaused;
+            const btn = document.getElementById('btn-pause');
+            btn.innerText = isPaused ? "▶" : "⏸";
+            
+            const tracks = document.querySelectorAll('.orbit-track, .moon-track');
+            tracks.forEach(track => {
+                track.style.animationPlayState = isPaused ? 'paused' : 'running';
+            });
+        }
+
         function selectPlanet(key) {
             const data = solarData[key];
             const stats = document.getElementById('detail-stats');
@@ -696,10 +770,16 @@
             }
 
             // Highlight Logic: Pause all, highlight one
-            document.querySelectorAll('.orbit-track').forEach(track => {
+            document.querySelectorAll('.orbit-track, .moon-track').forEach(track => {
                 track.style.animationPlayState = 'paused';
+            });
+            document.querySelectorAll('.orbit-track').forEach(track => {
                 track.style.opacity = '0.3';
             });
+
+            // Update global pause state UI
+            isPaused = true;
+            document.getElementById('btn-pause').innerText = "▶";
 
             if (key !== 'sun') {
                 const activeTrack = document.getElementById(`track-${key}`);
@@ -718,8 +798,16 @@
             document.getElementById('detail-desc').innerHTML = `Our solar system consists of our star, the Sun, and everything bound to it by gravity.<br><br><strong>Click a planet in the view to begin your journey.</strong>`;
             document.getElementById('detail-stats').classList.add('hidden');
 
-            document.querySelectorAll('.orbit-track').forEach(track => {
+            // Resume animation
+            isPaused = false;
+            document.getElementById('btn-pause').innerText = "⏸";
+
+            document.querySelectorAll('.orbit-track, .moon-track').forEach(track => {
                 track.style.animationPlayState = 'running';
+                track.getAnimations().forEach(anim => anim.playbackRate = currentSpeed);
+            });
+            
+            document.querySelectorAll('.orbit-track').forEach(track => {
                 track.style.opacity = '1';
             });
         }
