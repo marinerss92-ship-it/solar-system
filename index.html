@@ -52,7 +52,6 @@
             font-size: 2.5rem;
             margin-bottom: 0.5rem;
             background: linear-gradient(90deg, #4cc9f0, #4361ee);
-            background-clip: text;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
@@ -186,6 +185,28 @@
         @keyframes orbit-rotate {
             from { transform: translate(-50%, -50%) rotate(0deg); }
             to { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+
+        /* Moons */
+        .moon-track {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border-radius: 50%;
+            border: 1px solid rgba(255,255,255,0.1);
+            animation: orbit-rotate linear infinite;
+            pointer-events: none;
+        }
+
+        .moon-body {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border-radius: 50%;
+            background-color: #fff;
+            box-shadow: 0 0 2px white;
         }
 
         /* Sidebar / Info Panel */
@@ -475,7 +496,10 @@
                 desc: "Our home planet is the only place we know of so far that's inhabited by living things. It's also the only planet in our solar system with liquid water on the surface.",
                 orbitRadius: 130,
                 size: 13,
-                speed: 2.9
+                speed: 2.9,
+                majorMoons: [
+                    { name: "The Moon", size: 3, color: "#cccccc", orbitDistance: 24, speed: 2 }
+                ]
             },
             mars: {
                 name: "Mars",
@@ -499,7 +523,11 @@
                 desc: "Jupiter is more than twice as massive as the other planets of our solar system combined. The Great Red Spot is a giant storm bigger than Earth that has raged for hundreds of years.",
                 orbitRadius: 230,
                 size: 28,
-                speed: 1.3
+                speed: 1.3,
+                majorMoons: [
+                    { name: "Ganymede", size: 4, color: "#d4a373", orbitDistance: 45, speed: 1.5 },
+                    { name: "Europa", size: 3, color: "#fefae0", orbitDistance: 38, speed: 1.2 }
+                ]
             },
             saturn: {
                 name: "Saturn",
@@ -512,7 +540,10 @@
                 orbitRadius: 300,
                 size: 24,
                 speed: 0.9,
-                class: 'saturn'
+                class: 'saturn',
+                majorMoons: [
+                    { name: "Titan", size: 4, color: "#e0c068", orbitDistance: 50, speed: 2.5 }
+                ]
             },
             uranus: {
                 name: "Uranus",
@@ -605,6 +636,27 @@
                     e.stopPropagation();
                     selectPlanet(key);
                 };
+
+                // Add Moons if they exist
+                if (data.majorMoons) {
+                    data.majorMoons.forEach(moon => {
+                        const moonTrack = document.createElement('div');
+                        moonTrack.className = 'moon-track';
+                        moonTrack.style.width = moon.orbitDistance + 'px';
+                        moonTrack.style.height = moon.orbitDistance + 'px';
+                        moonTrack.style.animationDuration = moon.speed + 's';
+
+                        const moonBody = document.createElement('div');
+                        moonBody.className = 'moon-body';
+                        moonBody.style.width = moon.size + 'px';
+                        moonBody.style.height = moon.size + 'px';
+                        moonBody.style.backgroundColor = moon.color;
+                        moonBody.title = moon.name;
+
+                        moonTrack.appendChild(moonBody);
+                        planet.appendChild(moonTrack);
+                    });
+                }
 
                 // Create Label
                 const label = document.createElement('div');
